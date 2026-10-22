@@ -45,6 +45,8 @@
   function update() {
     const m = simulation.metrics(), cell = simulation.cell(selected);
     $('active').textContent = m.activeCells;
+    $('cell-total').textContent = simulation.cells.length;
+    $('fail-half').textContent = 'Fallar hasta ' + Math.ceil(simulation.cells.length / 2);
     $('transfers').textContent = number.format(m.transfers);
     $('transfer-detail').textContent = number.format(m.dataTransfers) + ' datos · ' + number.format(m.energyTransfers) + ' energía';
     $('completed').textContent = number.format(m.completed);
@@ -73,13 +75,13 @@
     $('packet-count').textContent = simulation.packets.length + ' envíos en tránsito';
     $('fail-selected').textContent = (cell.alive ? 'Fallar ' : 'Recuperar ') + label(selected);
     $('fail-half').disabled = m.activeCells === 0;
-    $('recover').disabled = m.activeCells === 16;
+    $('recover').disabled = m.activeCells === simulation.cells.length;
     $('support').disabled = !cell.alive || !['both', 'energy'].includes(cell.key.mode);
     cellButtons.forEach((button, index) => {
       const c = simulation.cells[index];
       button.setAttribute('aria-pressed', String(c.id === selected));
       button.dataset.state = !c.alive ? 'failed' : c.key.mode === 'closed' ? 'closed' : 'active';
-      button.setAttribute('aria-label', 'Seleccionar célula ' + c.id + (!c.alive ? ', en fallo' : ', activa'));
+      button.setAttribute('aria-label', 'Seleccionar célula ' + c.id + ', grupo ' + c.group + (!c.alive ? ', en fallo' : ', activa'));
     });
     const stalled = simulation.queues.some((queue, index) => (queue.normal.length + queue.urgent.length) > 0
       && !simulation.cells.some(c => c.alive && ['both', 'data'].includes(c.key.mode) && c.key.channel === index + 1));
@@ -123,14 +125,15 @@
   function getPositions() {
     const anchors = [[-3, 0], [0, 3], [1.5, -1.5], [3, 0], [3, 3], [0, -3], [-3, -3], [-3, 3]];
     return simulation.cells.map((cell, index) => {
-      const pair = Math.floor(index / 2), side = index % 2 ? 1 : -1;
-      const angle = simulation.time * 0.8 + pair * 0.8 + (side > 0 ? Math.PI : 0);
+      const group = cell.group - 1, side = [-1, 1, 0][cell.slot];
+      const phase = cell.slot * Math.PI * 2 / Phenom.CELLS_PER_GROUP;
+      const angle = simulation.time * 0.8 + group * 0.8 + phase;
       const center = view === 'adn'
-        ? { x: 360 + side * (105 + Math.sin(simulation.time * 0.45 + pair * 0.75) * 65), y: 87 + pair * 55 }
-        : { x: 360 + anchors[pair][0] * 57, y: 290 - anchors[pair][1] * 57 };
+        ? { x: 360 + side * (105 + Math.sin(simulation.time * 0.45 + group * 0.75) * 65), y: 87 + group * 55 }
+        : { x: 360 + anchors[group][0] * 57, y: 290 - anchors[group][1] * 57 };
       const orbit = view === 'adn' ? 10 : 25;
       // A failed cell holds its own phase; the other cells keep orbiting.
-      const a = !cell.alive ? cell.failedAt * 0.8 + pair * 0.8 + (side > 0 ? Math.PI : 0) : angle;
+      const a = !cell.alive ? cell.failedAt * 0.8 + group * 0.8 + phase : angle;
       return { id: cell.id, x: center.x + Math.cos(a) * orbit, y: center.y + Math.sin(a) * orbit, center, orbit };
     });
   }
@@ -147,8 +150,12 @@
       ctx.fillText('(0, 3)', 360, 71); ctx.fillText('(−3, 0)', 123, 285);
       ctx.fillText('(1,5; −1,5)', 464, 412);
     } else {
-      for (let i = 0; i < 8; i++) path([positions[i * 2], positions[i * 2 + 1]], '#2a414f');
-      for (let side = 0; side < 2; side++) path(positions.filter((_, i) => i % 2 === side), '#426d72', 1.8);
+      for (let group = 1; group <= Phenom.GROUP_COUNT; group++) {
+        const members = positions.filter(p => simulation.cell(p.id).group === group).sort((a, b) => a.x - b.x);
+        path(members, '#2a414f');
+      }
+      for (let slot = 0; slot < Phenom.CELLS_PER_GROUP; slot++)
+        path(positions.filter(p => simulation.cell(p.id).slot === slot), '#426d72', 1.8);
       ctx.fillStyle = '#90acb9'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
       ctx.fillText('ESTRUCTURA ADN · VISTA CONCEPTUAL', 360, 519);
     }
@@ -236,7 +243,8 @@
     update(); draw(); announce(simulation.events[0].message);
   });
   $('fail-half').addEventListener('click', () => {
-    simulation.failRandom(8); update(); draw(); announce('Fallo aplicado a hasta ocho células activas. Los fragmentos quedan en cola para las disponibles.');
+    const count = Math.ceil(simulation.cells.length / 2);
+    simulation.failRandom(count); update(); draw(); announce('Fallo aplicado a hasta ' + count + ' células activas. Los fragmentos quedan en cola para las disponibles.');
   });
   $('recover').addEventListener('click', () => { simulation.recoverAll(); update(); draw(); announce('Todas las células están recuperadas.'); });
   $('reset').addEventListener('click', () => $('reset-dialog').showModal());

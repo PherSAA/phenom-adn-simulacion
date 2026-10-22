@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { Simulation, STEP } = require('../engine.js');
+const { Simulation, STEP, CELL_COUNT, GROUP_COUNT, CELLS_PER_GROUP } = require('../engine.js');
 const tickFor = (sim, seconds) => { for (let i = 0; i < Math.round(seconds / STEP); i++) sim.tick(); };
 const clean = () => { const sim = new Simulation(); sim.autoTraffic = false; return sim; };
 function conserved(sim) {
@@ -15,7 +15,7 @@ function conserved(sim) {
   }
   assert.equal(m.queued, queued); assert.equal(m.running, running);
   assert.equal(m.created, m.completed + sim.jobs.size, 'no lost or duplicated tasks');
-  assert.equal(sim.cells.length, 16, 'cells are never destroyed');
+  assert.equal(sim.cells.length, CELL_COUNT, 'cells are never destroyed');
 }
 
 test('pause freezes time, packets, job progress and recovery', () => {
@@ -90,14 +90,14 @@ for (const parts of [1, 2, 4]) test('Split Run recombines ' + parts + ' parts in
 test('failed work resumes from checkpoints without duplicate completion', () => {
   const sim = clean(); sim.addTasks(100); tickFor(sim, 0.6);
   const part = sim.cell(1).running[0]; assert.ok(part.checkpoint > 0);
-  sim.setAutoRecovery(false); sim.failRandom(8); assert.equal(sim.metrics().activeCells, 8);
+  sim.setAutoRecovery(false); sim.failRandom(8); assert.equal(sim.metrics().activeCells, CELL_COUNT - 8);
   assert.ok(sim.stats.reassigned > 0); conserved(sim); tickFor(sim, 90);
   assert.equal(sim.stats.completed, 100); assert.equal(sim.stats.partsCompleted, 400); conserved(sim);
 });
 
 test('all failures preserve the queue, and manual recovery drains it', () => {
   const sim = clean(); sim.setAutoRecovery(false); sim.addTasks(25); tickFor(sim, 0.3);
-  sim.failRandom(16); const before = sim.metrics().queued; tickFor(sim, 8);
+  sim.failRandom(CELL_COUNT); const before = sim.metrics().queued; tickFor(sim, 8);
   assert.equal(sim.metrics().queued, before); assert.equal(sim.metrics().activeCells, 0); conserved(sim);
   sim.recoverAll(); tickFor(sim, 30); assert.equal(sim.stats.completed, 25); conserved(sim);
 });
@@ -127,7 +127,7 @@ test('urgent work takes the next free slot without cancelling active work', () =
 
 test('capacity changes do not drop active work; task and event buffers stay bounded', () => {
   const sim = new Simulation(); sim.setCapacity(4); sim.addTasks(1000); tickFor(sim, 0.3);
-  assert.equal(sim.metrics().running, 64); sim.setCapacity(1); conserved(sim);
+  assert.equal(sim.metrics().running, CELL_COUNT * 4); sim.setCapacity(1); conserved(sim);
   tickFor(sim, 300); assert.equal(sim.stats.completed, 1000); conserved(sim);
   assert.ok(sim.events.length <= 100); assert.ok(sim.recentResults.length <= 20);
   assert.equal(sim.addTasks(10000), 10000); assert.equal(sim.addTasks(1), 0); conserved(sim);
@@ -137,6 +137,34 @@ test('report accurately labels synthetic data and can be parsed as JSON', () => 
   const sim = clean(); sim.addTasks(10); tickFor(sim, 20);
   const report = JSON.parse(JSON.stringify(sim.report()));
   assert.equal(report.mode, 'browser_simulation'); assert.equal(report.dataSource, 'synthetic_demo');
-  assert.equal(report.metrics.completed, 10); assert.equal(report.cells.length, 16);
+  assert.equal(report.metrics.completed, 10); assert.equal(report.cells.length, CELL_COUNT);
   assert.ok(report.recentResults.every(r => r.verified));
+});
+
+
+test('each original group gains one cell, preserving C1–C16 identities', () => {
+  const sim = clean();
+  assert.equal(sim.cells.length, 24);
+  assert.equal(GROUP_COUNT, 8); assert.equal(CELLS_PER_GROUP, 3);
+  for (let group = 1; group <= 8; group++) {
+    const members = sim.cells.filter(c => c.group === group);
+    assert.deepEqual(members.map(c => c.id), [group * 2 - 1, group * 2, 16 + group]);
+    assert.deepEqual(members.map(c => c.slot), [0, 1, 2]);
+    assert.ok(members.every(c => c.key.mode === 'both' && c.key.channel === 1));
+  }
+  conserved(sim);
+});
+
+test('the eight added cells process tasks, transfer and recover independently', () => {
+  const sim = clean();
+  for (let id = 1; id <= 16; id++) sim.setKey(id, 'closed', 1);
+  sim.addTasks(8, { parts: 1 }); tickFor(sim, 0.1);
+  assert.ok(sim.cells.slice(16).every(c => c.running.length === 1));
+  assert.ok(sim.transfer(17, 24, 'data', 'Tercera célula activa'));
+  tickFor(sim, 10);
+  assert.equal(sim.stats.completed, 8); assert.equal(sim.stats.transfers, 1);
+  sim.fail(24); assert.equal(sim.cell(24).alive, false);
+  tickFor(sim, 6); assert.equal(sim.cell(24).alive, true); conserved(sim);
+  assert.equal(sim.report().settings.cellsPerGroup, 3);
+  assert.equal(sim.report().cells[23].group, 8);
 });

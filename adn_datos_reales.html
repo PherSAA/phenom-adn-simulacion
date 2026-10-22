@@ -20,11 +20,11 @@
     </header>
     <section class="hero">
       <div><p class="eyebrow">LABORATORIO 01 · LLAVE + SPLIT RUN</p><h1>Movimiento continuo.<br><span>Trabajo compartido.</span></h1><p class="intro">Explora cómo las células intercambian información, reparten tareas y se recuperan de un fallo.</p></div>
-      <div class="hero-aside"><div class="version">ADN / 02</div><p>16 células · 8 pares<br>Llaves integradas · Reserva E</p><button id="export" class="secondary">↓ Exportar informe</button></div>
+      <div class="hero-aside"><div class="version">ADN / 02</div><p>24 células · 8 grupos de 3<br>Llaves integradas · Reserva E</p><button id="export" class="secondary">↓ Exportar informe</button></div>
     </section>
     <div class="notice"><span class="notice-icon" aria-hidden="true">i</span><p><strong>Simulación en tu navegador.</strong> Los datos son ejemplos; la energía es una unidad del modelo. No representa ADN biológico ni tecnología física demostrada.</p></div>
     <section class="metrics" aria-label="Métricas de la simulación">
-      <div class="metric"><span>Células activas</span><strong><b id="active">16</b><small> / 16</small></strong><span class="metric-foot">Persisten tras cada intercambio</span></div>
+      <div class="metric"><span>Células activas</span><strong><b id="active">24</b><small> / <span id="cell-total">24</span></small></strong><span class="metric-foot">Persisten tras cada intercambio</span></div>
       <div class="metric"><span>Transferencias entregadas</span><strong id="transfers">0</strong><span class="metric-foot" id="transfer-detail">0 datos · 0 energía</span></div>
       <div class="metric"><span>Tareas completadas</span><strong id="completed">0</strong><span class="metric-foot" id="task-detail">0 fragmentos en cola</span></div>
       <div class="metric"><span>Ritmo del modelo</span><strong><b id="rate">0,0</b><small> tareas/s</small></strong><span class="metric-foot">Por segundo simulado · últimos 5 s</span></div>
@@ -73,7 +73,7 @@
         </section>
         <section class="panel" aria-labelledby="fault-title">
           <div class="panel-title"><div><p class="eyebrow">03 / RESILIENCIA</p><h2 id="fault-title">Prueba un fallo</h2></div></div>
-          <div class="two-buttons"><button id="fail-selected" class="danger">Fallar C1</button><button id="fail-half" class="danger">Fallar hasta 8</button></div>
+          <div class="two-buttons"><button id="fail-selected" class="danger">Fallar C1</button><button id="fail-half" class="danger">Fallar hasta 12</button></div>
           <button id="recover" class="secondary full">Recuperar todas</button>
           <label class="check"><input id="auto-recovery" type="checkbox" checked> Recuperación automática · 6 s sim.</label>
           <p class="hint">Las demás células continúan. El fallo conserva la célula y su llave. La pausa también congela la recuperación.</p>

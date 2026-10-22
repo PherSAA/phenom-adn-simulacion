@@ -9,6 +9,8 @@
   const SPEEDS = [0.25, 1, 2, 5, 20];
   const MODES = ['both', 'data', 'energy', 'closed'];
   const MAX_TASKS = 10000;
+  const GROUP_COUNT = 8, CELLS_PER_GROUP = 3, CELL_COUNT = GROUP_COUNT * CELLS_PER_GROUP;
+  const ORIGINAL_CELL_COUNT = GROUP_COUNT * 2;
   const allows = (cell, type) => cell.alive && (cell.key.mode === 'both' || cell.key.mode === type);
   class Queue {
     constructor() { this.items = []; this.head = 0; }
@@ -29,8 +31,12 @@
       this.ticks = 0; this.accumulator = 0; this.speed = 1; this.paused = true;
       this.autoTraffic = true; this.autoRecovery = true; this.recoveryDelay = 6;
       this.capacity = 1; this.nextJob = 1; this.nextPacket = 1; this.eventId = 0;
-      this.cells = Array.from({ length: 16 }, (_, i) => ({
-        id: i + 1, alive: true, energy: 40 + (i * 7 % 45),
+      this.cells = Array.from({ length: CELL_COUNT }, (_, i) => ({
+        id: i + 1,
+        // Keep C1–C16 in their original groups; append C17–C24 as the third members.
+        group: i < ORIGINAL_CELL_COUNT ? Math.floor(i / 2) + 1 : i - ORIGINAL_CELL_COUNT + 1,
+        slot: i < ORIGINAL_CELL_COUNT ? i % 2 : 2,
+        alive: true, energy: 40 + (i * 7 % 45),
         key: { mode: 'both', channel: 1 }, running: [], completed: 0,
         failedAt: null, recoverAt: null
       }));
@@ -172,7 +178,7 @@
       return true;
     }
     failRandom(count = 1) {
-      if (!Number.isInteger(count) || count < 1 || count > 16) throw new RangeError('Cantidad de fallos inválida');
+      if (!Number.isInteger(count) || count < 1 || count > this.cells.length) throw new RangeError('Cantidad de fallos inválida');
       const alive = this.cells.filter(c => c.alive);
       for (let i = 0; i < Math.min(count, alive.length); i++) {
         const index = i + Math.floor(this.random() * (alive.length - i));
@@ -282,12 +288,13 @@
       return { schemaVersion: 1, mode: 'browser_simulation', dataSource: 'synthetic_demo',
         exportedAt: new Date().toISOString(), seed: this.seed,
         settings: { speed: this.speed, capacity: this.capacity, autoTraffic: this.autoTraffic,
+          groupCount: GROUP_COUNT, cellsPerGroup: CELLS_PER_GROUP,
           autoRecovery: this.autoRecovery, recoverySeconds: this.recoveryDelay },
-        metrics: this.metrics(), cells: this.cells.map(c => ({ id: c.id, alive: c.alive,
+        metrics: this.metrics(), cells: this.cells.map(c => ({ id: c.id, group: c.group, slot: c.slot, alive: c.alive,
           energy: c.energy, key: { ...c.key }, runningParts: c.running.length, completedParts: c.completed })),
         recentResults: this.recentResults.map(r => ({ ...r })), events: this.events.map(e => ({ ...e })),
         note: 'Métricas de este modelo en JavaScript. Sin ADN biológico, pagos, energía física ni procesos distribuidos reales. El informe no es una copia restaurable de la sesión.' };
     }
   }
-  return { Simulation, STEP, SPEEDS, MAX_TASKS };
+  return { Simulation, STEP, SPEEDS, MAX_TASKS, GROUP_COUNT, CELLS_PER_GROUP, CELL_COUNT };
 });

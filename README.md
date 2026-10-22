@@ -47,7 +47,7 @@ resultados en JSON; ese informe no es una copia restaurable de la sesión.
 | 0,25× / 1× / 2× / 5× / 20× | Cambia el tiempo simulado por segundo real. No cambia la potencia del dispositivo. |
 | Reiniciar | Tras confirmar, limpia la sesión y restablece la misma semilla y configuración inicial. |
 | ADN / La Llave | Dos vistas del mismo estado, sin reiniciar los datos. |
-| C1–C16 | Inspecciona una célula desde el gráfico o los botones accesibles. |
+| C1–C24 | Inspecciona una célula desde el gráfico o los botones accesibles. |
 | Permisos de llave | Datos + energía, solo datos, solo energía o cerrada. Se aplican al elegir. |
 | Canal 1–4 | Las transferencias requieren un canal común; las tareas se procesan en su canal. |
 | Sincronizar llaves | Copia permisos y canal de la célula seleccionada a las demás. |
@@ -57,10 +57,18 @@ resultados en JSON; ese informe no es una copia restaurable de la sesión.
 | Fragmentos por tarea | Reparte cada nueva tarea en 1, 2 o 4 partes y reúne sus resultados. |
 | Capacidad por célula | Permite 1, 2 o 4 fragmentos simultáneos. Al reducirla, termina los ya activos. |
 | Fallar / Recuperar | Reencola el trabajo desde su último punto de guardado; las demás células continúan. |
-| Fallar hasta 8 | Prueba un fallo de hasta ocho células que sigan activas. |
+| Fallar hasta 12 | Prueba un fallo de hasta doce células que sigan activas. |
 | Recuperación automática | Recupera una célula a los 6 segundos simulados. Desactivarla cancela ese plazo. |
 | Tráfico de ejemplo | Genera mensajes sintéticos y transferencias de energía dentro del modelo. |
 | Exportar informe | Guarda métricas, configuración, llaves, 100 eventos y 20 resultados recientes. |
+
+## Grupos de tres células
+
+Hay ocho grupos de tres células (24 en total), además de E. C1–C16 conservan sus
+identificadores y grupos; C17–C24 son la tercera célula de cada grupo, respectivamente.
+Las tres orbitan con un desfase de 120° y llevan la misma llave integrada. Se conservan
+las coordenadas de La Llave, el movimiento circular y las reglas de tareas y energía.
+El escenario de fallo de la mitad se adapta a 12 células.
 
 ## Qué significa la llave
 
@@ -87,7 +95,7 @@ lógica de esta demo, **no criptografía ni autenticación de una red real**.
   en tránsito vuelve al origen; los fragmentos de tareas sí se reencolan por separado.
 - La energía total incluye células, reserva E y paquetes en tránsito. No aumenta ni
   desaparece al transferirse o cancelar envíos. Se reserva espacio para posibles devoluciones.
-- Límites: 16 células, 10.000 tareas pendientes, 128 envíos simultáneos, 100 eventos y
+- Límites: 24 células, 10.000 tareas pendientes, 128 envíos simultáneos, 100 eventos y
   20 resultados recientes. El ritmo se expresa por segundo **simulado**, no como benchmark
   de rendimiento real. El movimiento de una célula que falla se detiene en la vista La Llave;
   en ADN su posición también sigue la estructura visual global.
