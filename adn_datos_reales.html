@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ADN · Datos reales</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0a0e17;color:#e6edf3;font:14px system-ui}
+main{max-width:720px;margin:auto;padding:12px}
+h1{color:#58a6ff;font-size:1.2em;text-align:center}
+.controls{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0}
+button{padding:8px 12px;border-radius:6px;border:none;background:#238636;color:#fff;cursor:pointer}
+button.alt{background:#21262d;border:1px solid #30363d}
+button.warn{background:#5a2530}
+.views{display:grid;grid-template-columns:1.1fr 1fr;gap:10px}
+@media(max-width:600px){.views{grid-template-columns:1fr}}
+.panel{background:#161b22;border-radius:12px;padding:10px}
+.panel h3{margin:0 0 8px;font-size:0.9em;color:#79c0ff}
+canvas{width:100%;background:#0d1117;border-radius:8px;display:block}
+.log{font-size:0.7em;color:#8b949e;max-height:180px;overflow:auto}
+.entry{padding:3px 0;border-bottom:1px solid #21262d}
+.entry b{color:#3fb950}
+.stats{display:flex;gap:10px;font-size:0.75em;color:#8b949e;margin:6px 0}
+.stats b{color:#f0c14b}
+</style>
+</head>
+<body>
+<main>
+<h1>ADN · Datos reales</h1>
+<div class="controls">
+  <button onclick="togglePause()">Pausar</button>
+  <button class="warn" onclick="failShip()">Fallar nave</button>
+  <button class="alt" onclick="exportLog()">Exportar</button>
+</div>
+<div class="stats">
+  <span>Transferencias: <b id="count">0</b></span>
+  <span>Velocidad: <b id="speed">alta</b></span>
+</div>
+<div class="views">
+  <div class="panel">
+    <h3>ADN</h3>
+    <canvas id="adn" width="360" height="380"></canvas>
+  </div>
+  <div class="panel">
+    <h3>Datos en tránsito</h3>
+    <div id="log" class="log"></div>
+  </div>
+</div>
+</main>
+<script>
+const canvas = document.getElementById('adn');
+const ctx = canvas.getContext('2d');
+let t = 0, paused = false, transferCount = 0;
+let packets = [];
+let logEntries = [];
+
+const colors = ['#1f6feb','#39c5cf','#f0883e','#a371f7','#3fb950','#f85149'];
+const pairs = 8;
+const ships = [];
+
+const dataTypes = [
+  { type: 'pago', unit: 'XRP', gen: () => (Math.random() * 50 + 1).toFixed(2) },
+  { type: 'temperatura', unit: '°C', gen: () => (Math.random() * 15 + 18).toFixed(1) },
+  { type: 'humedad', unit: '%', gen: () => Math.floor(Math.random() * 40 + 40) },
+  { type: 'material', unit: 'm²', gen: () => (Math.random() * 20 + 5).toFixed(1) },
+  { type: 'avance', unit: '%', gen: () => Math.floor(Math.random() * 30 + 70) },
+  { type: 'alerta', unit: '', gen: () => ['filtración', 'retraso', 'faltante', 'ok'][Math.floor(Math.random() * 4)] }
+];
+
+for (let i = 0; i < pairs; i++) {
+  const y = 25 + i * 44;
+  ships.push({ id: i * 2, y, side: -1, color: colors[i % colors.length], alive: true });
+  ships.push({ id: i * 2 + 1, y, side: 1, color: colors[(i + 3) % colors.length], alive: true });
+}
+
+function getPos(ship) {
+  const twist = t * 0.5 + ship.y * 0.01;
+  const offset = Math.sin(twist) * 35;
+  return { x: 180 + ship.side * (24 - offset * 0.15), y: ship.y };
+}
+
+function spawnPacket() {
+  const alive = ships.filter(s => s.alive);
+  if (alive.length < 2) return;
+  const from = alive[Math.floor(Math.random() * alive.length)];
+  let to = alive[Math.floor(Math.random() * alive.length)];
+  while (to === from) to = alive[Math.floor(Math.random() * alive.length)];
+  const dt = dataTypes[Math.floor(Math.random() * dataTypes.length)];
+  packets.push({ from, to, progress: 0, type: dt.type, value: dt.gen(), unit: dt.unit });
+}
+
+function addLog(msg) {
+  logEntries.unshift({ time: new Date().toLocaleTimeString(), msg });
+  document.getElementById('log').innerHTML = logEntries.slice(0, 25).map(e => 
+    `<div class="entry">${e.time} · ${e.msg}</div>`
+  ).join('');
+  document.getElementById('count').textContent = ++transferCount;
+}
+
+function togglePause() { paused = !paused; }
+function failShip() {
+  const alive = ships.filter(s => s.alive);
+  if (!alive.length) return;
+  const ship = alive[Math.floor(Math.random() * alive.length)];
+  ship.alive = false;
+  addLog(`<b>Nave ${ship.id} falló</b>`);
+  setTimeout(() => { ship.alive = true; addLog(`Nave ${ship.id} restaurada`); }, 2500);
+}
+function exportLog() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(logEntries, null, 2)], { type: 'application/json' }));
+  a.download = 'datos_adn.json';
+  a.click();
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, 360, 380);
+
+  ships.forEach(ship => {
+    const pos = getPos(ship);
+    ctx.globalAlpha = ship.alive ? 1 : 0.25;
+
+    if (ship.alive) {
+      for (let j = 0; j < 3; j++) {
+        const a = t * 3 + j * (Math.PI * 2 / 3) + ship.id;
+        ctx.fillStyle = ship.color;
+        ctx.beginPath();
+        ctx.arc(pos.x + Math.cos(a) * 9, pos.y + Math.sin(a) * 9, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    ctx.fillStyle = ship.alive ? ship.color : '#642f39';
+    ctx.beginPath();
+    ctx.moveTo(pos.x + 5, pos.y);
+    ctx.lineTo(pos.x - 3, pos.y + 2);
+    ctx.lineTo(pos.x - 1, pos.y);
+    ctx.lineTo(pos.x - 3, pos.y - 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+
+  for (let i = 0; i < pairs; i++) {
+    const p1 = getPos(ships[i * 2]);
+    const p2 = getPos(ships[i * 2 + 1]);
+    ctx.strokeStyle = '#30363d';
+    ctx.beginPath();
+    ctx.moveTo(p1.x + 5, p1.y);
+    ctx.lineTo(p2.x - 5, p2.y);
+    ctx.stroke();
+  }
+
+  packets.forEach(p => {
+    if (!p.from.alive || !p.to.alive) { p.progress = 2; return; }
+    p.progress += 0.018;
+    const fp = getPos(p.from), tp = getPos(p.to);
+    const x = fp.x + (tp.x - fp.x) * p.progress;
+    const y = fp.y + (tp.y - fp.y) * p.progress;
+    ctx.fillStyle = '#f0c14b';
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+    if (p.progress >= 1) addLog(`Nave ${p.from.id}→${p.to.id}: <b>${p.type}</b> ${p.value}${p.unit}`);
+  });
+  packets = packets.filter(p => p.progress < 1.5);
+
+  if (!paused && Math.random() < 0.04) spawnPacket();
+  if (!paused) t += 0.025;
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
