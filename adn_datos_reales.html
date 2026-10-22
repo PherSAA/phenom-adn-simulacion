@@ -1,176 +1,89 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ADN · Datos reales</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;background:#0a0e17;color:#e6edf3;font:14px system-ui}
-main{max-width:720px;margin:auto;padding:12px}
-h1{color:#58a6ff;font-size:1.2em;text-align:center}
-.controls{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0}
-button{padding:8px 12px;border-radius:6px;border:none;background:#238636;color:#fff;cursor:pointer}
-button.alt{background:#21262d;border:1px solid #30363d}
-button.warn{background:#5a2530}
-.views{display:grid;grid-template-columns:1.1fr 1fr;gap:10px}
-@media(max-width:600px){.views{grid-template-columns:1fr}}
-.panel{background:#161b22;border-radius:12px;padding:10px}
-.panel h3{margin:0 0 8px;font-size:0.9em;color:#79c0ff}
-canvas{width:100%;background:#0d1117;border-radius:8px;display:block}
-.log{font-size:0.7em;color:#8b949e;max-height:180px;overflow:auto}
-.entry{padding:3px 0;border-bottom:1px solid #21262d}
-.entry b{color:#3fb950}
-.stats{display:flex;gap:10px;font-size:0.75em;color:#8b949e;margin:6px 0}
-.stats b{color:#f0c14b}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#09131e">
+  <meta name="description" content="Laboratorio interactivo Phenom: simulación ADN, llaves integradas y tareas Split Run.">
+  <title>Phenom · ADN / Split Run</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Crect width='60' height='60' rx='16' fill='%2309131e'/%3E%3Cpath d='M10 30 30 10 42 42Z' fill='none' stroke='%2373e0c1' stroke-width='4'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="engine.js"></script>
+  <script defer src="app.js"></script>
 </head>
 <body>
-<main>
-<h1>ADN · Datos reales</h1>
-<div class="controls">
-  <button onclick="togglePause()">Pausar</button>
-  <button class="warn" onclick="failShip()">Fallar nave</button>
-  <button class="alt" onclick="exportLog()">Exportar</button>
-</div>
-<div class="stats">
-  <span>Transferencias: <b id="count">0</b></span>
-  <span>Velocidad: <b id="speed">alta</b></span>
-</div>
-<div class="views">
-  <div class="panel">
-    <h3>ADN</h3>
-    <canvas id="adn" width="360" height="380"></canvas>
-  </div>
-  <div class="panel">
-    <h3>Datos en tránsito</h3>
-    <div id="log" class="log"></div>
-  </div>
-</div>
-</main>
-<script>
-const canvas = document.getElementById('adn');
-const ctx = canvas.getContext('2d');
-let t = 0, paused = false, transferCount = 0;
-let packets = [];
-let logEntries = [];
-
-const colors = ['#1f6feb','#39c5cf','#f0883e','#a371f7','#3fb950','#f85149'];
-const pairs = 8;
-const ships = [];
-
-const dataTypes = [
-  { type: 'pago', unit: 'XRP', gen: () => (Math.random() * 50 + 1).toFixed(2) },
-  { type: 'temperatura', unit: '°C', gen: () => (Math.random() * 15 + 18).toFixed(1) },
-  { type: 'humedad', unit: '%', gen: () => Math.floor(Math.random() * 40 + 40) },
-  { type: 'material', unit: 'm²', gen: () => (Math.random() * 20 + 5).toFixed(1) },
-  { type: 'avance', unit: '%', gen: () => Math.floor(Math.random() * 30 + 70) },
-  { type: 'alerta', unit: '', gen: () => ['filtración', 'retraso', 'faltante', 'ok'][Math.floor(Math.random() * 4)] }
-];
-
-for (let i = 0; i < pairs; i++) {
-  const y = 25 + i * 44;
-  ships.push({ id: i * 2, y, side: -1, color: colors[i % colors.length], alive: true });
-  ships.push({ id: i * 2 + 1, y, side: 1, color: colors[(i + 3) % colors.length], alive: true });
-}
-
-function getPos(ship) {
-  const twist = t * 0.5 + ship.y * 0.01;
-  const offset = Math.sin(twist) * 35;
-  return { x: 180 + ship.side * (24 - offset * 0.15), y: ship.y };
-}
-
-function spawnPacket() {
-  const alive = ships.filter(s => s.alive);
-  if (alive.length < 2) return;
-  const from = alive[Math.floor(Math.random() * alive.length)];
-  let to = alive[Math.floor(Math.random() * alive.length)];
-  while (to === from) to = alive[Math.floor(Math.random() * alive.length)];
-  const dt = dataTypes[Math.floor(Math.random() * dataTypes.length)];
-  packets.push({ from, to, progress: 0, type: dt.type, value: dt.gen(), unit: dt.unit });
-}
-
-function addLog(msg) {
-  logEntries.unshift({ time: new Date().toLocaleTimeString(), msg });
-  document.getElementById('log').innerHTML = logEntries.slice(0, 25).map(e => 
-    `<div class="entry">${e.time} · ${e.msg}</div>`
-  ).join('');
-  document.getElementById('count').textContent = ++transferCount;
-}
-
-function togglePause() { paused = !paused; }
-function failShip() {
-  const alive = ships.filter(s => s.alive);
-  if (!alive.length) return;
-  const ship = alive[Math.floor(Math.random() * alive.length)];
-  ship.alive = false;
-  addLog(`<b>Nave ${ship.id} falló</b>`);
-  setTimeout(() => { ship.alive = true; addLog(`Nave ${ship.id} restaurada`); }, 2500);
-}
-function exportLog() {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(logEntries, null, 2)], { type: 'application/json' }));
-  a.download = 'datos_adn.json';
-  a.click();
-}
-
-function draw() {
-  ctx.fillStyle = '#0d1117';
-  ctx.fillRect(0, 0, 360, 380);
-
-  ships.forEach(ship => {
-    const pos = getPos(ship);
-    ctx.globalAlpha = ship.alive ? 1 : 0.25;
-
-    if (ship.alive) {
-      for (let j = 0; j < 3; j++) {
-        const a = t * 3 + j * (Math.PI * 2 / 3) + ship.id;
-        ctx.fillStyle = ship.color;
-        ctx.beginPath();
-        ctx.arc(pos.x + Math.cos(a) * 9, pos.y + Math.sin(a) * 9, 2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    ctx.fillStyle = ship.alive ? ship.color : '#642f39';
-    ctx.beginPath();
-    ctx.moveTo(pos.x + 5, pos.y);
-    ctx.lineTo(pos.x - 3, pos.y + 2);
-    ctx.lineTo(pos.x - 1, pos.y);
-    ctx.lineTo(pos.x - 3, pos.y - 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  });
-
-  for (let i = 0; i < pairs; i++) {
-    const p1 = getPos(ships[i * 2]);
-    const p2 = getPos(ships[i * 2 + 1]);
-    ctx.strokeStyle = '#30363d';
-    ctx.beginPath();
-    ctx.moveTo(p1.x + 5, p1.y);
-    ctx.lineTo(p2.x - 5, p2.y);
-    ctx.stroke();
-  }
-
-  packets.forEach(p => {
-    if (!p.from.alive || !p.to.alive) { p.progress = 2; return; }
-    p.progress += 0.018;
-    const fp = getPos(p.from), tp = getPos(p.to);
-    const x = fp.x + (tp.x - fp.x) * p.progress;
-    const y = fp.y + (tp.y - fp.y) * p.progress;
-    ctx.fillStyle = '#f0c14b';
-    ctx.beginPath();
-    ctx.arc(x, y, 3, 0, Math.PI * 2);
-    ctx.fill();
-    if (p.progress >= 1) addLog(`Nave ${p.from.id}→${p.to.id}: <b>${p.type}</b> ${p.value}${p.unit}`);
-  });
-  packets = packets.filter(p => p.progress < 1.5);
-
-  if (!paused && Math.random() < 0.04) spawnPacket();
-  if (!paused) t += 0.025;
-  requestAnimationFrame(draw);
-}
-draw();
-</script>
+  <a href="#laboratorio" class="skip-link">Ir al laboratorio</a>
+  <main>
+    <header class="topbar">
+      <a class="brand" href="./"><span class="brand-mark" aria-hidden="true">P</span> PHENOM <span class="brand-divider">/</span> <span class="muted">CELL LAB</span></a>
+      <span class="experiment"><span class="dot"></span> Modelo experimental</span>
+    </header>
+    <section class="hero">
+      <div><p class="eyebrow">LABORATORIO 01 · LLAVE + SPLIT RUN</p><h1>Movimiento continuo.<br><span>Trabajo compartido.</span></h1><p class="intro">Explora cómo las células intercambian información, reparten tareas y se recuperan de un fallo.</p></div>
+      <div class="hero-aside"><div class="version">ADN / 02</div><p>16 células · 8 pares<br>Llaves integradas · Reserva E</p><button id="export" class="secondary">↓ Exportar informe</button></div>
+    </section>
+    <div class="notice"><span class="notice-icon" aria-hidden="true">i</span><p><strong>Simulación en tu navegador.</strong> Los datos son ejemplos; la energía es una unidad del modelo. No representa ADN biológico ni tecnología física demostrada.</p></div>
+    <section class="metrics" aria-label="Métricas de la simulación">
+      <div class="metric"><span>Células activas</span><strong><b id="active">16</b><small> / 16</small></strong><span class="metric-foot">Persisten tras cada intercambio</span></div>
+      <div class="metric"><span>Transferencias entregadas</span><strong id="transfers">0</strong><span class="metric-foot" id="transfer-detail">0 datos · 0 energía</span></div>
+      <div class="metric"><span>Tareas completadas</span><strong id="completed">0</strong><span class="metric-foot" id="task-detail">0 fragmentos en cola</span></div>
+      <div class="metric"><span>Ritmo del modelo</span><strong><b id="rate">0,0</b><small> tareas/s</small></strong><span class="metric-foot">Por segundo simulado · últimos 5 s</span></div>
+    </section>
+    <section id="laboratorio" class="workspace">
+      <div class="lab-column">
+        <div class="panel simulation-panel">
+          <div class="panel-title"><div><p class="eyebrow">ESPACIO DE INTERCAMBIO</p><h2>ADN · Simulación</h2></div><span id="status" class="status">En pausa</span></div>
+          <div class="transport"><button id="play" class="primary">▶ Iniciar</button><button id="step" class="secondary">Paso +0,1 s</button><button id="reset" class="quiet">↺ Reiniciar</button></div>
+          <div class="speed-row"><span>Velocidad</span><div class="segmented" role="group" aria-label="Velocidad de simulación"><button data-speed="0.25" aria-pressed="false">0,25×</button><button data-speed="1" aria-pressed="true">1×</button><button data-speed="2" aria-pressed="false">2×</button><button data-speed="5" aria-pressed="false">5×</button><button data-speed="20" aria-pressed="false">20×</button></div></div>
+          <div class="canvas-wrap">
+            <div class="view-tabs" role="group" aria-label="Vista de la simulación"><button data-view="adn" aria-pressed="true">ADN</button><button data-view="key" aria-pressed="false">La Llave</button></div>
+            <canvas id="view" width="720" height="540" aria-label="Células con llave integrada, órbitas y transferencias. También puedes seleccionarlas con los botones bajo el gráfico.">Tu navegador necesita soporte para canvas. Los controles y las métricas permanecen disponibles.</canvas>
+            <div class="canvas-footer"><span><span class="dot cyan"></span> Datos</span><span><span class="dot gold"></span> Energía</span><span><span class="dot red"></span> Fallo</span><span id="clock">00:00,0 sim.</span></div>
+          </div>
+          <p id="view-caption" class="caption">Cada célula lleva su llave y orbita su posición. Toca una célula para inspeccionarla.</p>
+          <div class="cell-selector" id="cell-selector" role="group" aria-label="Seleccionar célula"></div>
+          <div class="lab-options"><label class="check"><input id="traffic" type="checkbox" checked> Tráfico de ejemplo</label><span id="packet-count" class="muted">0 envíos en tránsito</span></div>
+        </div>
+        <div class="panel events-panel">
+          <div class="panel-title"><div><p class="eyebrow">TRAZABILIDAD</p><h2>Lo que está pasando</h2></div><span class="muted small">Tiempo simulado</span></div>
+          <ol id="events" class="events" aria-label="Últimos eventos"></ol>
+          <p class="caption">El informe incluye los últimos 100 eventos y 20 resultados verificados.</p>
+        </div>
+      </div>
+      <aside class="control-column">
+        <section class="panel key-panel" aria-labelledby="key-title">
+          <div class="panel-title"><div><p class="eyebrow">01 / LLAVE INTEGRADA</p><h2 id="key-title">Célula <span id="selected-name">C1</span></h2></div><span id="cell-state" class="tag">Disponible</span></div>
+          <div class="energy-reading"><span>Energía local <b id="cell-energy">40,0 / 100 u.</b></span><progress id="energy-bar" max="100" value="40" aria-label="Energía de la célula"></progress></div>
+          <label class="field">Permisos de la llave<select id="key-mode"><option value="both">Datos + energía</option><option value="data">Solo datos</option><option value="energy">Solo energía</option><option value="closed">Llave cerrada</option></select></label>
+          <label class="field">Canal de intercambio<select id="key-channel"><option value="1">Canal 1</option><option value="2">Canal 2</option><option value="3">Canal 3</option><option value="4">Canal 4</option></select></label>
+          <p class="hint">Los cambios se aplican al elegir. Dos llaves intercambian si permiten el tipo de envío y comparten canal.</p>
+          <div class="two-buttons"><button id="sync" class="secondary">Sincronizar llaves</button><button id="support" class="secondary">E → +15 u.</button></div>
+          <details class="details"><summary>Enviar un mensaje de prueba</summary><label class="field">Mensaje<input id="payload" type="text" maxlength="160" value="Phenom · conexión de prueba" autocomplete="off"></label><label class="field">Destino<select id="destination"></select></label><button id="send" class="secondary full">Enviar desde la célula seleccionada</button></details>
+          <div class="energy-total"><span>Reserva central E <b id="reserve">400,0 u.</b></span><span>Energía total del modelo <b id="total-energy">—</b></span><small>Incluye energía en tránsito. Transferir no crea energía.</small></div>
+        </section>
+        <section class="panel split-panel" aria-labelledby="split-title">
+          <div class="panel-title"><div><p class="eyebrow">02 / SPLIT RUN</p><h2 id="split-title">Dividir. Continuar. Reunir.</h2></div></div>
+          <p class="hint">Divide cada tarea entre células disponibles. Si una falla, su trabajo vuelve a la cola desde un punto de guardado.</p>
+          <div class="two-fields"><label class="field">Fragmentos / tarea<select id="parts"><option value="1">1 · sin división</option><option value="2">2 fragmentos</option><option value="4" selected>4 fragmentos</option></select></label><label class="field">Capacidad / célula<select id="capacity"><option value="1">1 fragmento</option><option value="2">2 simultáneos</option><option value="4">4 simultáneos</option></select></label></div>
+          <div class="task-buttons"><button id="add-small" class="primary">+100 tareas</button><button id="add-large" class="secondary">+1.000</button><button id="add-urgent" class="secondary">+1 urgente</button></div>
+          <p class="hint">Las nuevas tareas usan el canal de la célula seleccionada. Cada tarea verifica la suma de cuadrados de 1 a 100.</p>
+          <dl class="split-stats"><div><dt>Fragmentos activos</dt><dd id="running">0</dd></div><div><dt>Fragmentos en cola</dt><dd id="queued">0</dd></div><div><dt>Reasignados</dt><dd id="reassigned">0</dd></div><div><dt>Latencia media</dt><dd id="latency">0,0 s</dd></div></dl>
+          <p id="queue-note" class="queue-note" hidden></p>
+          <div class="result-line"><span class="dot"></span><span id="result">Añade tareas para probar el reparto.</span></div>
+        </section>
+        <section class="panel" aria-labelledby="fault-title">
+          <div class="panel-title"><div><p class="eyebrow">03 / RESILIENCIA</p><h2 id="fault-title">Prueba un fallo</h2></div></div>
+          <div class="two-buttons"><button id="fail-selected" class="danger">Fallar C1</button><button id="fail-half" class="danger">Fallar hasta 8</button></div>
+          <button id="recover" class="secondary full">Recuperar todas</button>
+          <label class="check"><input id="auto-recovery" type="checkbox" checked> Recuperación automática · 6 s sim.</label>
+          <p class="hint">Las demás células continúan. El fallo conserva la célula y su llave. La pausa también congela la recuperación.</p>
+        </section>
+      </aside>
+    </section>
+    <footer><span>PHENOM · Somos fenomenales.</span><span>Simulación local · sin conexiones externas</span></footer>
+  </main>
+  <div id="announcement" class="toast" role="status" aria-live="polite"></div>
+  <dialog id="reset-dialog"><h2>¿Reiniciar el laboratorio?</h2><p>Se borrarán las tareas, métricas y cambios de llaves de esta sesión. Puedes exportar el informe antes.</p><form method="dialog"><button value="cancel" class="secondary">Cancelar</button><button value="reset" class="primary">Reiniciar</button></form></dialog>
+  <noscript><p class="notice">Activa JavaScript para utilizar la simulación.</p></noscript>
 </body>
 </html>

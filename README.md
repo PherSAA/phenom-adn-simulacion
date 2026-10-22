@@ -1,2 +1,122 @@
-# phenom-adn-simulacion
-Simulación ADN con split-run, llave y transferencia de datos reales
+# Phenom · ADN / La Llave / Split Run
+
+Laboratorio interactivo en español para explorar células persistentes, llaves integradas,
+intercambio de información y reparto de tareas. Conserva el archivo de entrada original
+`adn_datos_reales.html`; `index.html` abre esa misma simulación.
+
+**Esta versión es una simulación local en JavaScript.** Los datos automáticos son ejemplos,
+la energía usa unidades ficticias y la disposición ADN es conceptual. No se conecta a
+sensores, pagos, criptomonedas, redes sociales ni servicios externos. No demuestra un
+mecanismo de ADN biológico, generación de energía ni superioridad de una arquitectura física.
+
+## Abrir y probar
+
+### Desde el teléfono con GitHub Codespaces
+
+1. Abre este repositorio, pulsa **Code → Codespaces** y abre o crea un Codespace en `main`.
+2. En la terminal del repositorio ejecuta:
+
+   ```bash
+   python3 -m http.server 8000 --bind 0.0.0.0
+   ```
+
+3. En **Ports / Puertos**, abre el puerto **8000** en el navegador y mantenlo **Private / Privado**.
+4. Pulsa **Iniciar**. Usa **+100 tareas** y prueba **5×** o **20×**.
+
+La pestaña **Code** muestra archivos, no ejecuta HTML. El puerto privado permite probar
+la interfaz sin activar GitHub Pages. Esta actualización no configura hosting ni cambia
+la visibilidad del repositorio. El Codespace debe permanecer encendido; revisa su tiempo
+incluido antes de dejarlo funcionando durante periodos largos.
+
+### En una computadora
+
+Descarga el ZIP del repositorio y descomprímelo completo. Abre `index.html` o
+`adn_datos_reales.html` junto con `engine.js`, `app.js` y `styles.css`. También puedes usar
+el servidor anterior y abrir `http://localhost:8000`.
+
+No requiere npm, compilación, claves API ni conexión a internet para ejecutar el modelo.
+La sesión vive en memoria: al recargar se reinicia. **Exportar informe** descarga los
+resultados en JSON; ese informe no es una copia restaurable de la sesión.
+
+## Controles
+
+| Función | Comportamiento |
+| --- | --- |
+| Iniciar / Pausar | Controla movimiento, paquetes, procesamiento y recuperación con un único reloj. |
+| Paso +0,1 s | Avanza exactamente una décima de segundo simulado mientras está pausada. |
+| 0,25× / 1× / 2× / 5× / 20× | Cambia el tiempo simulado por segundo real. No cambia la potencia del dispositivo. |
+| Reiniciar | Tras confirmar, limpia la sesión y restablece la misma semilla y configuración inicial. |
+| ADN / La Llave | Dos vistas del mismo estado, sin reiniciar los datos. |
+| C1–C16 | Inspecciona una célula desde el gráfico o los botones accesibles. |
+| Permisos de llave | Datos + energía, solo datos, solo energía o cerrada. Se aplican al elegir. |
+| Canal 1–4 | Las transferencias requieren un canal común; las tareas se procesan en su canal. |
+| Sincronizar llaves | Copia permisos y canal de la célula seleccionada a las demás. |
+| E → +15 u. | Envía hasta 15 unidades desde una reserva finita; respeta permisos y capacidad. |
+| Mensaje de prueba | Envía texto local entre dos células; muestra entrega o bloqueo en el registro. |
+| +100 / +1.000 / +1 urgente | Crea tareas en el canal seleccionado. Las urgentes toman el siguiente hueco libre. |
+| Fragmentos por tarea | Reparte cada nueva tarea en 1, 2 o 4 partes y reúne sus resultados. |
+| Capacidad por célula | Permite 1, 2 o 4 fragmentos simultáneos. Al reducirla, termina los ya activos. |
+| Fallar / Recuperar | Reencola el trabajo desde su último punto de guardado; las demás células continúan. |
+| Fallar hasta 8 | Prueba un fallo de hasta ocho células que sigan activas. |
+| Recuperación automática | Recupera una célula a los 6 segundos simulados. Desactivarla cancela ese plazo. |
+| Tráfico de ejemplo | Genera mensajes sintéticos y transferencias de energía dentro del modelo. |
+| Exportar informe | Guarda métricas, configuración, llaves, 100 eventos y 20 resultados recientes. |
+
+## Qué significa la llave
+
+Se mantiene el cuadrado de −1,5 a +1,5, los puntos cardinales exteriores ±3 y el triángulo
+desde (−3, 0) a (0, 3) y a la esquina inferior derecha (1,5; −1,5). Cada célula lleva una
+miniatura fija de la llave. En la vista **La Llave**, las células orbitan los puntos con
+desfase y la reserva E permanece en el centro. Los permisos y canales son una nueva regla
+lógica de esta demo, **no criptografía ni autenticación de una red real**.
+
+## Reglas del motor
+
+- Paso temporal fijo de 1/60 s; los mismos segundos simulados producen los mismos resultados
+  a 30, 60 o 120 fotogramas por segundo. Se limita el salto de tiempo tras una interrupción.
+- Al ocultar la pestaña, la interfaz pausa la sesión y requiere reanudarla explícitamente.
+- Una tarea calcula la suma de cuadrados de 1 a 100: **338.350**. Cada fragmento cubre un
+  rango distinto y solo se contabiliza una tarea cuando todas sus partes han terminado.
+- Los puntos de guardado se actualizan cada 0,25 s de progreso simulado. Son objetos en
+  memoria del navegador, sin procesos independientes, persistencia SQLite ni servidor.
+- Cerrar una llave o cambiar su canal devuelve sus fragmentos activos a la cola. Si no hay
+  una célula elegible, la cola espera y la interfaz explica la causa.
+- Una transferencia entregada se retira de la cola y cuenta una sola vez. Fallos,
+  recuperaciones, bloqueos y cancelaciones no incrementan las entregas.
+- Si falla una célula o cambia una llave durante un envío, se cancela ese envío. La energía
+  en tránsito vuelve al origen; los fragmentos de tareas sí se reencolan por separado.
+- La energía total incluye células, reserva E y paquetes en tránsito. No aumenta ni
+  desaparece al transferirse o cancelar envíos. Se reserva espacio para posibles devoluciones.
+- Límites: 16 células, 10.000 tareas pendientes, 128 envíos simultáneos, 100 eventos y
+  20 resultados recientes. El ritmo se expresa por segundo **simulado**, no como benchmark
+  de rendimiento real. El movimiento de una célula que falla se detiene en la vista La Llave;
+  en ADN su posición también sigue la estructura visual global.
+
+## Comprobación
+
+Las pruebas del motor usan el ejecutor integrado de Node.js (18 o posterior):
+
+```bash
+node --test tests/engine.test.cjs
+```
+
+Comprueban pausa completa, reloj independiente de fotogramas, velocidades equivalentes,
+entregas únicas, permisos/canales, devolución y conservación de energía, resultados
+reunidos, recuperación, fallos totales, prioridad urgente, límites y reporte JSON.
+
+También se verificaron los controles en un DOM de prueba: iniciar, pausa, paso, velocidad,
+llaves, mensajes, exportación, reinicio y pausa al ocultar la pestaña. Esa comprobación
+no renderiza el canvas.
+
+La interfaz usa diseño adaptable, botones de selección alternativos al canvas, navegación
+por teclado, etiquetas accesibles y un diálogo de confirmación para el reinicio. La revisión
+visual en un teléfono físico queda pendiente; no equivale a las pruebas del motor.
+
+## Archivos
+
+- `adn_datos_reales.html`: interfaz y controles; mantiene la ruta original.
+- `index.html`: entrada al mismo laboratorio.
+- `styles.css`: diseño adaptable para móvil y escritorio.
+- `engine.js`: motor reproducible, colas, llaves, energía y reportes.
+- `app.js`: representación visual y conexión de los controles con el motor.
+- `tests/engine.test.cjs`: pruebas de invariantes y regresión.
