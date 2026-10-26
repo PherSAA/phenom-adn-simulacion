@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Split Run · Teletransportación cuántica</title>
+    <meta
+      name="description"
+      content="Plano técnico ficticio Split Run v02.7: portales, túnel Einstein-Rosen y protocolo de entrelazamiento. Se abre en el navegador, sin instalar nada."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app" data-phase="idle">
+      <header class="topbar">
+        <div class="meta-row">
+          <a href="../index.html">Phenom ADN</a>
+          <span>SR-QX-027</span>
+          <span>v02.7 · Nivel cuántico</span>
+        </div>
+        <p class="system-name">Sistema de teletransportación cuántica</p>
+        <h1>Split Run</h1>
+        <p class="flow" id="flow">
+          <span class="flow-part"><span data-macro="0">Desmaterialización</span></span>
+          <span class="flow-part"><span aria-hidden="true">→</span><span data-macro="1">Transmisión entrelazada</span></span>
+          <span class="flow-part"><span aria-hidden="true">→</span><span data-macro="2">Rematerialización</span></span>
+        </p>
+      </header>
+
+      <div class="schematic">
+        <canvas id="plano" aria-hidden="true"></canvas>
+      </div>
+      <p class="sr-only" id="live" aria-live="polite">Canal en espera.</p>
+
+      <div class="actions">
+        <button id="run" type="button" class="btn primary">Ejecutar Split Run</button>
+        <button id="step" type="button" class="btn">Paso</button>
+        <button id="abort" type="button" class="btn" disabled>Abortar</button>
+        <div class="rates" role="group" aria-label="Velocidad de la corrida">
+          <button type="button" class="btn tiny" data-rate="0.5">0.5×</button>
+          <button type="button" class="btn tiny" data-rate="1" aria-pressed="true">1×</button>
+          <button type="button" class="btn tiny" data-rate="2">2×</button>
+        </div>
+      </div>
+
+      <div class="below">
+        <div class="segments" id="segments" aria-hidden="true">
+          <span><i></i></span>
+          <span><i></i></span>
+          <span><i></i></span>
+          <span><i></i></span>
+          <span><i></i></span>
+        </div>
+
+        <section class="tune">
+          <label class="slider">
+            <span>Energía <output id="energy-out">4.2 PW</output></span>
+            <input id="energy" type="range" min="0.4" max="8" step="0.1" value="4.2" aria-label="Energía del motor en petavatios" />
+          </label>
+          <label class="slider">
+            <span>Campo magnético <output id="field-out">9.8 T</output></span>
+            <input id="field" type="range" min="0.5" max="20" step="0.1" value="9.8" aria-label="Campo magnético del portal origen en teslas" />
+          </label>
+          <div class="presets">
+            <button id="nominal" type="button" class="btn tiny">Nominal</button>
+            <button id="limit" type="button" class="btn tiny">Forzar límite</button>
+            <label class="subject">
+              <span>Sujeto</span>
+              <input id="subject" value="QX-01" maxlength="10" aria-label="Identificador del sujeto" autocomplete="off" />
+            </label>
+          </div>
+          <p class="hint" id="hint">Ventana nominal 4.2 PW · 9.8 T. Fuera de ella sube la decoherencia.</p>
+        </section>
+
+        <section class="motors">
+          <article class="plate motor">
+            <p class="kicker">Portal origen</p>
+            <h2>Motor de desplazamiento</h2>
+            <dl>
+              <div class="stat"><dt>Energía</dt><dd id="m-energy">4.2 PW</dd></div>
+              <div class="stat"><dt>Campo magnético</dt><dd id="m-field">9.8 Tesla</dd></div>
+              <div class="stat"><dt>Estabilizador</dt><dd id="m-stab">Nominal</dd></div>
+              <div class="stat"><dt>Anillo A · horaria</dt><dd id="m-a">12.5 THz · 0°</dd></div>
+              <div class="stat"><dt>Anillo B · antihoraria</dt><dd id="m-b">12.5 THz · 0°</dd></div>
+              <div class="stat"><dt>Merkaba</dt><dd>Descomposición</dd></div>
+            </dl>
+          </article>
+
+          <article class="plate motor state">
+            <p class="kicker">Rejilla de espacio-tiempo</p>
+            <h2 id="state-title">Estado separable</h2>
+            <p class="formula" id="formula">|ψ⟩ = |0⟩ ⊗ |0⟩</p>
+            <svg id="bell" class="bell" viewBox="0 0 180 72" role="img" aria-label="Diagrama de entrelazamiento cuántico">
+              <circle cx="28" cy="36" r="11" />
+              <circle cx="152" cy="36" r="11" />
+              <path d="M40 36 H140" />
+              <path d="M40 30 C78 6 102 6 140 30" />
+              <path d="M40 42 C78 66 102 66 140 42" />
+              <circle cx="90" cy="18" r="3" />
+              <circle cx="90" cy="54" r="3" />
+            </svg>
+            <p class="fid" id="fidelity"><span>Fidelidad</span><strong>99.999%</strong></p>
+            <p class="quiet">Teleportación cuántica instantánea · curvatura dimensional</p>
+          </article>
+
+          <article class="plate motor">
+            <p class="kicker">Portal destino</p>
+            <h2>Motor de desplazamiento</h2>
+            <dl>
+              <div class="stat"><dt>Energía</dt><dd id="d-energy">4.2 PW</dd></div>
+              <div class="stat"><dt>Campo de reconstrucción</dt><dd id="d-recon">En espera</dd></div>
+              <div class="stat"><dt>Sincronización</dt><dd id="d-sync">Bloqueada</dd></div>
+              <div class="stat"><dt>Doble anillo</dt><dd>Rotación opuesta</dd></div>
+              <div class="stat"><dt>Merkaba</dt><dd>Reconstrucción</dd></div>
+              <div class="stat"><dt>Qubits en tránsito</dt><dd id="d-qubits">0</dd></div>
+            </dl>
+          </article>
+        </section>
+
+        <ul class="legend">
+          <li>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1 L14 13 H2 Z M8 15 L2 3 H14 Z" /></svg>
+            Merkaba
+          </li>
+          <li>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.2" /></svg>
+            Qubit
+          </li>
+          <li>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M12 4 A5 5 0 1 1 8 3" /><path d="M8 1 L8 4 L11 4" /></svg>
+            Rotación horaria
+          </li>
+          <li>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4 A5 5 0 1 0 8 3" /><path d="M8 1 L8 4 L5 4" /></svg>
+            Rotación antihoraria
+          </li>
+        </ul>
+
+        <section class="plates">
+          <article class="plate plate-ent">
+            <p class="kicker">Sistema de entrelazamiento</p>
+            <h2>Protocolo Split Run v02.7</h2>
+            <ul class="bullets">
+              <li>Entrelazamiento del par antes del rayo</li>
+              <li>Sincronización cuántica vía canal fotónico entrelazado</li>
+              <li>Anillo toroidal A en rotación horaria, 12.5 THz</li>
+              <li>Anillo toroidal B en rotación antihoraria, 12.5 THz</li>
+              <li>Merkaba dorada: materia a datos, y reconstrucción</li>
+            </ul>
+            <p class="quiet">Versión 02.7 · clasificado: nivel cuántico</p>
+          </article>
+
+          <article class="plate plate-seq">
+            <p class="kicker">Secuencia operativa</p>
+            <h2 id="phase">En espera</h2>
+            <ol class="steps" id="steps">
+              <li><span>01</span><span>Escaneo cuántico y desmaterialización</span></li>
+              <li><span>02</span><span>Conversión a datos cuánticos vía merkaba</span></li>
+              <li><span>03</span><span>Transmisión por rayo entrelazado</span></li>
+              <li><span>04</span><span>Propagación en túnel Einstein-Rosen</span></li>
+              <li><span>05</span><span>Rematerialización en portal destino</span></li>
+            </ol>
+            <ul class="log" id="log">
+              <li>SPLIT RUN v02.7 · CANAL EN ESPERA</li>
+              <li>ESTABILIZADOR DE CUÁNTICOS · LISTO</li>
+              <li>SINCRONIZACIÓN DESTINO · BLOQUEADA</li>
+            </ul>
+          </article>
+
+          <article class="plate plate-spec">
+            <p class="kicker">Plano técnico</p>
+            <h2>Especificaciones</h2>
+            <dl>
+              <div class="stat"><dt>Distancia operativa</dt><dd>Sin límite · no-local</dd></div>
+              <div class="stat"><dt>Temporización</dt><dd>Instantáneo</dd></div>
+              <div class="stat"><dt>Riesgo de decoherencia</dt><dd id="spec-risk">0.001%</dd></div>
+              <div class="stat"><dt>Fidelidad de estado</dt><dd id="spec-fid">99.999%</dd></div>
+              <div class="stat"><dt>Protocolo</dt><dd>Split Run v02.7</dd></div>
+            </dl>
+            <p class="banner ok" id="banner-ok" hidden></p>
+            <p class="banner" id="banner-bad" hidden></p>
+            <p class="quiet" id="spec-subject">Sujeto QX-01 · canal fotónico en reposo</p>
+          </article>
+        </section>
+
+        <p class="docline">Plano técnico ficticio · Split Run v02.7 · espacio ejecuta · flecha paso · esc aborta</p>
+      </div>
+    </main>
+    <script src="draw.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,13 +1,25 @@
 # Phenom · ADN / La Llave / Split Run
 
-Laboratorio interactivo en español para explorar células persistentes, llaves integradas,
-intercambio de información y reparto de tareas. Conserva el archivo de entrada original
-`adn_datos_reales.html`; `index.html` abre esa misma simulación.
+Dos laboratorios locales, en español, en el mismo repositorio. No usan npm ni servicios externos.
 
-**Esta versión es una simulación local en JavaScript.** Los datos automáticos son ejemplos,
-la energía usa unidades ficticias y la disposición ADN es conceptual. No se conecta a
-sensores, pagos, criptomonedas, redes sociales ni servicios externos. No demuestra un
-mecanismo de ADN biológico, generación de energía ni superioridad de una arquitectura física.
+| Plano | Abrir |
+| --- | --- |
+| Laboratorio de 24 células, llaves y tareas | [`adn_datos_reales.html`](adn_datos_reales.html) |
+| Teletransporte cuántico Split Run v02.7 | [`teletransporte/index.html`](teletransporte/index.html) |
+
+`index.html` es la puerta de los dos. El laboratorio de células queda como estaba: `engine.js`, `app.js`, `styles.css` y el video no se movieron.
+
+**Ambas piezas son simulaciones en JavaScript.** La energía, la fidelidad y la disposición ADN usan unidades ficticias. No hay sensores, pagos, criptomonedas ni un mecanismo biológico o físico real.
+
+## Teletransporte Split Run
+
+Plano técnico del protocolo de cinco pasos: escaneo, conversión por merkaba, rayo entrelazado, túnel Einstein-Rosen y rematerialización. La ventana nominal es 4.2 PW y 9.8 T (fidelidad 99.999 %, riesgo 0.001 %). **Forzar límite** (7.6 PW / 1.2 T) deja la reconstrucción en decoherencia.
+
+Abre `teletransporte/index.html` junto con `draw.js`, `app.js` y `styles.css` de esa carpeta. También sirve por el mismo servidor estático, en `http://localhost:8000/teletransporte/`. Espacio o Enter ejecutan, flecha derecha avanza un paso y Escape aborta. No hace falta internet: las fuentes son del sistema.
+
+```bash
+node --test tests/teleport.test.cjs
+```
 
 ## Abrir y probar
 
@@ -21,7 +33,7 @@ mecanismo de ADN biológico, generación de energía ni superioridad de una arqu
    ```
 
 3. En **Ports / Puertos**, abre el puerto **8000** en el navegador y mantenlo **Private / Privado**.
-4. Pulsa **Iniciar**. Usa **+100 tareas** y prueba **5×** o **20×**.
+4. Entra por la puerta o abre directo el laboratorio de células. Pulsa **Iniciar**. Usa **+100 tareas** y prueba **5×** o **20×**.
 
 La pestaña **Code** muestra archivos, no ejecuta HTML. El puerto privado permite probar
 la interfaz sin activar GitHub Pages. Esta actualización no configura hosting ni cambia
@@ -30,15 +42,15 @@ incluido antes de dejarlo funcionando durante periodos largos.
 
 ### En una computadora
 
-Descarga el ZIP del repositorio y descomprímelo completo. Abre `index.html` o
-`adn_datos_reales.html` junto con `engine.js`, `app.js` y `styles.css`. También puedes usar
+Descarga el ZIP del repositorio y descomprímelo completo. Abre `index.html`,
+`adn_datos_reales.html` o `teletransporte/index.html`. También puedes usar
 el servidor anterior y abrir `http://localhost:8000`.
 
 No requiere npm, compilación, claves API ni conexión a internet para ejecutar el modelo.
-La sesión vive en memoria: al recargar se reinicia. **Exportar informe** descarga los
-resultados en JSON; ese informe no es una copia restaurable de la sesión.
+La sesión vive en memoria: al recargar se reinicia. **Exportar informe**, en el laboratorio
+de células, descarga los resultados en JSON; ese informe no es una copia restaurable de la sesión.
 
-## Controles
+## Controles del laboratorio de células
 
 | Función | Comportamiento |
 | --- | --- |
@@ -105,16 +117,17 @@ lógica de esta demo, **no criptografía ni autenticación de una red real**.
 Las pruebas del motor usan el ejecutor integrado de Node.js (18 o posterior):
 
 ```bash
-node --test tests/engine.test.cjs
+node --test tests/engine.test.cjs tests/teleport.test.cjs
 ```
 
-Comprueban pausa completa, reloj independiente de fotogramas, velocidades equivalentes,
-entregas únicas, permisos/canales, devolución y conservación de energía, resultados
-reunidos, recuperación, fallos totales, prioridad urgente, límites y reporte JSON.
+Las del laboratorio comprueban pausa completa, reloj independiente de fotogramas, velocidades
+equivalentes, entregas únicas, permisos/canales, devolución y conservación de energía,
+resultados reunidos, recuperación, fallos totales, prioridad urgente, límites y reporte JSON.
+Las del teletransporte comprueban la ventana nominal y el límite de decoherencia.
 
-También se verificaron los controles en un DOM de prueba: iniciar, pausa, paso, velocidad,
-llaves, mensajes, exportación, reinicio y pausa al ocultar la pestaña. Esa comprobación
-no renderiza el canvas.
+También se verificaron los controles del laboratorio en un DOM de prueba: iniciar, pausa, paso,
+velocidad, llaves, mensajes, exportación, reinicio y pausa al ocultar la pestaña. Esa
+comprobación no renderiza el canvas.
 
 La interfaz usa diseño adaptable, botones de selección alternativos al canvas, navegación
 por teclado, etiquetas accesibles y un diálogo de confirmación para el reinicio. La revisión
@@ -122,9 +135,9 @@ visual en un teléfono físico queda pendiente; no equivale a las pruebas del mo
 
 ## Archivos
 
-- `adn_datos_reales.html`: interfaz y controles; mantiene la ruta original.
-- `index.html`: entrada al mismo laboratorio.
-- `styles.css`: diseño adaptable para móvil y escritorio.
-- `engine.js`: motor reproducible, colas, llaves, energía y reportes.
-- `app.js`: representación visual y conexión de los controles con el motor.
-- `tests/engine.test.cjs`: pruebas de invariantes y regresión.
+- `index.html`: puerta a los dos laboratorios.
+- `adn_datos_reales.html`: interfaz del laboratorio de células; mantiene la ruta original.
+- `styles.css`, `engine.js`, `app.js`: diseño, motor y controles de ese laboratorio.
+- `tests/engine.test.cjs`: pruebas del laboratorio.
+- `teletransporte/`: plano Split Run. `index.html`, `app.js`, `styles.css`, `draw.js` y `model.cjs`.
+- `tests/teleport.test.cjs`: pruebas de fidelidad del protocolo.
