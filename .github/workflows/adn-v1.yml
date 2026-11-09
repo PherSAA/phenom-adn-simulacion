@@ -1,0 +1,24 @@
+name: PHERSAA ADN V1 laboratory
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  laboratory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test tests/*.cjs
+      - run: node adn-v1/benchmark.cjs results.json
+      - run: node adn-v1/package-mobile.cjs phersaa-adn-mobile.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phersaa-adn-v1-review
+          path: |
+            results.json
+            phersaa-adn-mobile.html
