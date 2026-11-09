@@ -1,0 +1,36 @@
+✔ identities, permissions, input validation and durable idempotency (18.465431ms)
+✔ checkpoint recovery, attempt fencing, validation and exactly one result record (25.005753ms)
+✔ restart persists checkpoint and fences every old coordinator write (11.358199ms)
+✔ real IPC processes, kill after checkpoint, controlled reassignment and stop/start (823.136802ms)
+✔ stalled process is detected and replaced (919.92771ms)
+✔ HTTP validates host/origin, actions, serves UI and exports labelled report (124.91854ms)
+✔ pause freezes time, packets, job progress and recovery (17.217096ms)
+✔ fixed time produces equal state at 30, 60 and 120 frames per second (16.798174ms)
+✔ speed controls change simulated time without changing results at equal time (39.463712ms)
+✔ a delivered packet is removed and counted exactly once; failure events do not count (0.892554ms)
+✔ permissions and channels block incompatible sends and release in-flight energy (0.572302ms)
+✔ energy refunds reserve room when a sender receives another packet (0.920466ms)
+✔ E support conserves energy and respects selected key (0.494655ms)
+✔ Split Run recombines 1 parts into the verified result (9.434552ms)
+✔ Split Run recombines 2 parts into the verified result (6.62513ms)
+✔ Split Run recombines 4 parts into the verified result (5.566445ms)
+✔ failed work resumes from checkpoints without duplicate completion (4.709404ms)
+✔ all failures preserve the queue, and manual recovery drains it (4.645538ms)
+✔ automatic recovery uses simulated seconds and disabling it cancels deadlines (6.937039ms)
+✔ closing a busy key returns tasks to the queue and channel restrictions hold (3.572992ms)
+✔ urgent work takes the next free slot without cancelling active work (0.680255ms)
+✔ capacity changes do not drop active work; task and event buffers stay bounded (92.848615ms)
+✔ report accurately labels synthetic data and can be parsed as JSON (6.531058ms)
+✔ each original group gains one cell, preserving C1–C16 identities (0.364109ms)
+✔ the eight added cells process tasks, transfer and recover independently (0.7233ms)
+✔ ventana nominal 4.2 PW y 9.8 T (0.98248ms)
+✔ forzar límite decohere por debajo del umbral (0.165199ms)
+✔ la corrida nace en espera con el sujeto QX-01 (0.207373ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2312.95968
